@@ -1,26 +1,31 @@
+import addresses from '../contracts/addresses.json';
 import React, { useState } from 'react';
 import Web3 from 'web3';
 import PatientManagementAndNominee from '../contracts/PatientManagementAndNominee.json'; // Adjust path as needed
 import { useNavigate } from 'react-router-dom';
 
+const patientManagemetAndNomineeContractAddress=addresses.PatientManagementAndNominee;
 const PatientRegistration = ({ web3, account }) => {
     const [name, setName] = useState('');
-    const [nomineeAddress, setNomineeAddress] = useState('');
+    const [contact, setContact] = useState(''); // State for contact
+    const [patientAddress, setPatientAddress] = useState(''); // State for patientAddress (updated)
+    const [hospitalPassword, setHospitalPassword] = useState(''); // New state for password
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
-
-    // const web3 = new Web3(Web3.givenProvider || "http://localhost:7545"); // Adjust the provider as needed
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setMessage('');
 
         try {
-            // const accounts = await web3.eth.getAccounts();
-            const contract = new web3.eth.Contract(PatientManagementAndNominee.abi, "0xC57DC079fB608632e4Ad9C83924Ef5F1CB1A5bc2");
-            //your patient contract address should be added here
-            // Register the patient
-            await contract.methods.registerPatient(name, nomineeAddress).send({ from: account });
+            const contract = new web3.eth.Contract(
+                PatientManagementAndNominee.abi,
+                patientManagemetAndNomineeContractAddress // Add your patient contract address here
+            );
+
+            // Register the patient with password
+            await contract.methods.registerPatient(name, contact, patientAddress, hospitalPassword) // Added password parameter
+                .send({ from: account });
 
             setMessage('Patient registered successfully!');
 
@@ -47,12 +52,33 @@ const PatientRegistration = ({ web3, account }) => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="nomineeAddress">Nominee Address (optional):</label>
+                    <label htmlFor="contact">Contact:</label>
                     <input
                         type="text"
-                        id="nomineeAddress"
-                        value={nomineeAddress}
-                        onChange={(e) => setNomineeAddress(e.target.value)}
+                        id="contact"
+                        value={contact}
+                        onChange={(e) => setContact(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="patientAddress">Patient Address:</label>
+                    <input
+                        type="text"
+                        id="patientAddress"
+                        value={patientAddress}
+                        onChange={(e) => setPatientAddress(e.target.value)} // Changed from 'address' to 'patientAddress'
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="hospitalPassword">Password:</label>
+                    <input
+                        type="password"
+                        id="hospitalPassword"
+                        value={hospitalPassword}
+                        onChange={(e) => setHospitalPassword(e.target.value)} // Handle password input
+                        required
                     />
                 </div>
                 <button type="submit">Register Patient</button>

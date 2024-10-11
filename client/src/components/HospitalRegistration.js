@@ -1,11 +1,16 @@
+import addresses from '../contracts/addresses.json';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import HospitalAndHealthcareProfessionalManagement from '../contracts/HospitalAndHealthcareProfessionalManagement.json'; // Adjust path as needed
+import HospitalManagement from '../contracts/HospitalManagement.json'; // Adjust path as needed
 
-const RegisterHospital = ({ web3, account }) => {
-    const [hospitalId, setHospitalId] = useState('');
+const hospitalContractAddress = addresses.HospitalManagement;
+console.log(hospitalContractAddress);
+const HospitalRegistration = ({ web3, account }) => {
+    const [govHospitalId, setGovHospitalId] = useState(''); // Government-assigned hospital ID
     const [hospitalName, setHospitalName] = useState('');
-    const [hospitalLocation, setHospitalLocation] = useState('');
+    const [hospitalAddress, setHospitalAddress] = useState(''); // Hospital address
+    const [hospitalContact, setHospitalContact] = useState(''); // Hospital contact
+    const [hospitalPassword, setHospitalPassword] = useState(''); // New field for password
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
 
@@ -15,13 +20,13 @@ const RegisterHospital = ({ web3, account }) => {
 
         try {
             const contract = new web3.eth.Contract(
-                HospitalAndHealthcareProfessionalManagement.abi,
-                "0xE1c4ab92401e2193266877C7d14DFE2D93b79380"
-                // "YOUR_HOSPITAL_CONTRACT_ADDRESS_HERE" // Update the contract address here
+                HospitalManagement.abi,
+                hospitalContractAddress // Hospital contract address
             );
-            
+
+            // Call the register function with the password
             await contract.methods
-                .registerHospital(hospitalId, hospitalName, hospitalLocation)
+                .registerHospital(govHospitalId, hospitalName, hospitalAddress, hospitalContact, hospitalPassword)
                 .send({ from: account });
 
             setMessage('Hospital registered successfully!');
@@ -37,12 +42,12 @@ const RegisterHospital = ({ web3, account }) => {
             <h1>Register Hospital</h1>
             <form onSubmit={handleRegister}>
                 <div>
-                    <label htmlFor="hospitalId">Hospital ID:</label>
+                    <label htmlFor="govHospitalId">Government Hospital ID:</label>
                     <input
                         type="text"
-                        id="hospitalId"
-                        value={hospitalId}
-                        onChange={(e) => setHospitalId(e.target.value)}
+                        id="govHospitalId"
+                        value={govHospitalId}
+                        onChange={(e) => setGovHospitalId(e.target.value)}
                         required
                     />
                 </div>
@@ -57,12 +62,32 @@ const RegisterHospital = ({ web3, account }) => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="hospitalLocation">Hospital Location:</label>
+                    <label htmlFor="hospitalAddress">Hospital Address:</label>
                     <input
                         type="text"
-                        id="hospitalLocation"
-                        value={hospitalLocation}
-                        onChange={(e) => setHospitalLocation(e.target.value)}
+                        id="hospitalAddress"
+                        value={hospitalAddress}
+                        onChange={(e) => setHospitalAddress(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="hospitalContact">Hospital Contact:</label>
+                    <input
+                        type="text"
+                        id="hospitalContact"
+                        value={hospitalContact}
+                        onChange={(e) => setHospitalContact(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="hospitalPassword">Password:</label>
+                    <input
+                        type="password"
+                        id="hospitalPassword"
+                        value={hospitalPassword}
+                        onChange={(e) => setHospitalPassword(e.target.value)}
                         required
                     />
                 </div>
@@ -73,4 +98,4 @@ const RegisterHospital = ({ web3, account }) => {
     );
 };
 
-export default RegisterHospital;
+export default HospitalRegistration;

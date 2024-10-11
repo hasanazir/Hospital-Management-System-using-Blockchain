@@ -1,41 +1,75 @@
-import React, { useState } from 'react';
-import HospitalAndHealthcareProfessionalManagement from '../contracts/HospitalAndHealthcareProfessionalManagement.json'; // Adjust path as needed
+import addresses from '../contracts/addresses.json';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import HealthcareProfessionalManagement from '../contracts/HealthcareProfessionalManagement.json'; // Contract for healthcare professional management
+import HospitalManagement from '../contracts/HospitalManagement.json'; // Contract for hospital management
+
+const healthcareProfessionalContractAddress = addresses.HealthcareProfessionalManagement;
+const hospitalContractAddress = addresses.HospitalManagement;
 
 const DoctorRegistration = ({ web3, account }) => {
     const [name, setName] = useState('');
-    const [specialty, setSpecialty] = useState('');
     const [hospitalId, setHospitalId] = useState('');
+    const [gocDoctorId, setGocDoctorId] = useState(''); // New input for gocDoctorId
+    const [hospitalPassword, setHospitalPassword] = useState(''); // New input for password
     const [message, setMessage] = useState('');
+    const [doctorId, setDoctorId] = useState(null); // Track doctor ID for approval event
     const navigate = useNavigate();
 
-    // const web3 = new Web3(Web3.givenProvider || "http://localhost:7545"); // Adjust the provider as needed
-
+    // Function to handle registration form submission
     const handleRegister = async (e) => {
         e.preventDefault();
-        setMessage('');
+        setMessage('Registering doctor...');
 
         try {
-            // const accounts = await web3.eth.getAccounts();
-            const contract = new web3.eth.Contract(
-                HospitalAndHealthcareProfessionalManagement.abi,
-                "0xE1c4ab92401e2193266877C7d14DFE2D93b79380"
+            const contractHealthcare = new web3.eth.Contract(
+                HealthcareProfessionalManagement.abi,
+                healthcareProfessionalContractAddress // Address for healthcare professional management contract
+            );
 
-                //  "YOUR_HOSPITAL_CONTRACT_ADDRESS_HERE"
-                );
+            // Register the healthcare professional (doctor) with gocDoctorId and password
+            const receipt = await contractHealthcare.methods
+                .registerProfessional(name, hospitalId, gocDoctorId, hospitalPassword) // Removed specialty parameter
+                .send({ from: account });
 
-            // Register the healthcare professional (doctor)
-            await contract.methods.registerHealthcareProfessional(name, specialty, hospitalId).send({ from: account });
+            // Extract the doctor ID from the transaction receipt
+            const doctorIdFromReceipt = receipt.events.ProfessionalRegistered.returnValues.id;
+            setDoctorId(doctorIdFromReceipt); // Store the auto-generated doctor ID
 
-            setMessage('Doctor registered successfully!');
-
-            // Redirect to Doctor Dashboard
-            navigate('/doctor-dashboard');
+            setMessage('Doctor registration submitted. Waiting for hospital approval...');
         } catch (error) {
             console.error(error);
             setMessage('Error registering the doctor. Please try again.');
         }
     };
+
+    // Event listener to check if the doctor gets approved by the hospital
+    useEffect(() => {
+        if (doctorId) {
+            const contractHospital = new web3.eth.Contract(
+                HospitalManagement.abi,
+                hospitalContractAddress // Replace with the correct hospital management contract address
+            );
+
+            // Listen for the DoctorApproved event from the hospital management smart contract
+            contractHospital.events.DoctorApproved({
+                filter: { doctorId }, // Filter for the specific doctor ID
+            })
+            .on('data', (event) => {
+                const { approved } = event.returnValues;
+                if (approved) {
+                    setMessage('Doctor approved! Redirecting...');
+                    navigate('/doctor-dashboard'); // Redirect to doctor dashboard upon approval
+                } else {
+                    setMessage('Doctor registration was rejected by the hospital.');
+                }
+            })
+            .on('error', (error) => {
+                console.error(error);
+                setMessage('Error while waiting for approval.');
+            });
+        }
+    }, [doctorId, web3, navigate]);
 
     return (
         <div>
@@ -52,16 +86,6 @@ const DoctorRegistration = ({ web3, account }) => {
                     />
                 </div>
                 <div>
-                    <label htmlFor="specialty">Specialty:</label>
-                    <input
-                        type="text"
-                        id="specialty"
-                        value={specialty}
-                        onChange={(e) => setSpecialty(e.target.value)}
-                        required
-                    />
-                </div>
-                <div>
                     <label htmlFor="hospitalId">Hospital ID:</label>
                     <input
                         type="number"
@@ -71,9 +95,30 @@ const DoctorRegistration = ({ web3, account }) => {
                         required
                     />
                 </div>
+                <div>
+                    <label htmlFor="gocDoctorId">GOC Doctor ID:</label>
+                    <input
+                        type="text"
+                        id="gocDoctorId"
+                        value={gocDoctorId}
+                        onChange={(e) => setGocDoctorId(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="hospitalPassword">Password:</label>
+                    <input
+                        type="password"
+                        id="hospitalPassword"
+                        value={hospitalPassword}
+                        onChange={(e) => setHospitalPassword(e.target.value)}
+                        required
+                    />
+                </div>
                 <button type="submit">Register Doctor</button>
             </form>
             {message && <p>{message}</p>}
+            {doctorId && <p>Your auto-generated Doctor ID: {doctorId}</p>} {/* Display the auto-generated Doctor ID */}
         </div>
     );
 };

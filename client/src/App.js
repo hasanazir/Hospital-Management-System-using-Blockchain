@@ -9,6 +9,7 @@ import HospitalDashboard from './components/HospitalDashboard';
 import DoctorDashboard from './components/DoctorDashboard';
 import PatientDashboard from './components/PatientDashboard';
 import detectEthereumProvider from '@metamask/detect-provider';
+import LoginPage from "./components/LoginPage";
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
@@ -40,6 +41,7 @@ const App = () => {
         <Route path="/hospital-dashboard" element={<HospitalDashboard web3={web3} account={account} />} />
         <Route path="/doctor-dashboard" element={<DoctorDashboard web3={web3} account={account} />} />
         <Route path="/patient-dashboard" element={<PatientDashboard web3={web3} account={account} />} />
+        <Route path="/login" element={<LoginPage web3={web3} account={account}/>} /> {/* Add the login page route */}
       </Routes>
     </Router>
   );
