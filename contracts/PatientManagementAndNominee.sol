@@ -10,14 +10,27 @@ contract PatientManagementAndNominee {
         address nominee;          // Nominee's address (can be address(0) if not provided)
         bytes32 publicId;         // Public ID for the patient
         string password;          // Patient's password for login
+        bool nomineeConfirmed;    // Confirmation status of nominee
+        bytes32[] securityQuestions;  // Array of hashed security questions for nominee access
+        bytes32[] securityAnswers;    // Array of hashed security answers for nominee access
+    }
+
+    struct NomineeRequest {
+        uint256 patientId;
+        address nomineeAddress;
+        bool isPending;
     }
 
     mapping(uint256 => Patient) public patients;               // Mapping from patient ID to Patient struct
     mapping(bytes32 => uint256) public publicIdToPatientId;    // Mapping from public ID to patient ID
+    mapping(address => NomineeRequest) public nomineeRequests; // Mapping from nominee address to their pending request
     uint256 public patientCount;                               // Counter for patients
 
     event PatientRegistered(uint256 id, string name, string contact, string patientAddress, address nominee, bytes32 publicId);
-    event NomineeUpdated(uint256 patientId, address newNominee);
+    event NomineeRequestSent(uint256 patientId, address nominee);
+    event NomineeRequestAccepted(uint256 patientId, address nominee);
+    event NomineeRequestRejected(uint256 patientId, address nominee);
+    event NomineeCanceled(uint256 patientId, address nominee);
     event LoginSuccess(uint256 patientId, bytes32 publicId);
 
     // Register patient with optional nominee and additional details
@@ -25,12 +38,16 @@ contract PatientManagementAndNominee {
         string memory _name,
         string memory _contact,
         string memory _patientAddress,
-        string memory _password // New parameter for password
+        string memory _password,
+        bytes32[] memory _securityQuestions,
+        bytes32[] memory _securityAnswers
     ) public {
-        require(bytes(_name).length > 0, "Patient name cannot be empty.");     // Ensure name is not empty
-        require(bytes(_contact).length > 0, "Contact cannot be empty.");       // Ensure contact is not empty
-        require(bytes(_patientAddress).length > 0, "Address cannot be empty.");  // Ensure address is not empty
-        require(bytes(_password).length > 0, "Password cannot be empty.");     // Ensure password is not empty
+        require(bytes(_name).length > 0, "Patient name cannot be empty.");
+        require(bytes(_contact).length > 0, "Contact cannot be empty.");
+        require(bytes(_patientAddress).length > 0, "Address cannot be empty.");
+        require(bytes(_password).length > 0, "Password cannot be empty.");
+        require(_securityQuestions.length > 0, "At least one security question is required.");
+        require(_securityQuestions.length == _securityAnswers.length, "Security questions and answers must match in length.");
         
         patientCount++;
         bytes32 publicId = keccak256(abi.encodePacked(_name, patientCount)); // Generate unique public ID
@@ -38,18 +55,73 @@ contract PatientManagementAndNominee {
         // Ensure public ID is unique
         require(publicIdToPatientId[publicId] == 0, "Public ID already exists.");
 
-        // Create the patient; nominee can be address(0) initially (no nominee)
-        patients[patientCount] = Patient(patientCount, _name, _contact, _patientAddress, address(0), publicId, _password);
+        // Create the patient with nominee set to address(0) initially (no nominee)
+        patients[patientCount] = Patient(
+            patientCount, 
+            _name, 
+            _contact, 
+            _patientAddress, 
+            address(0), 
+            publicId, 
+            _password, 
+            false, 
+            _securityQuestions, 
+            _securityAnswers
+        );
         publicIdToPatientId[publicId] = patientCount;
         
         emit PatientRegistered(patientCount, _name, _contact, _patientAddress, address(0), publicId);
     }
 
-    // Update the nominee for an existing patient
+    // Send a nominee request (patient initiates the request)
     function updateNominee(uint256 _patientId, address _newNominee) public {
         require(patients[_patientId].id != 0, "Patient does not exist.");
-        patients[_patientId].nominee = _newNominee;
-        emit NomineeUpdated(_patientId, _newNominee);
+        require(_newNominee != address(0), "Nominee address cannot be zero.");
+        require(patients[_patientId].nominee == address(0), "Nominee already assigned. Revoke the current nominee first.");
+
+        // Create a pending nominee request
+        nomineeRequests[_newNominee] = NomineeRequest(_patientId, _newNominee, true);
+        emit NomineeRequestSent(_patientId, _newNominee);
+    }
+
+    // Nominee accepts the request
+    function acceptNomineeRequest(bytes32[] memory _providedAnswers) public {
+        NomineeRequest storage request = nomineeRequests[msg.sender];
+        require(request.isPending, "No pending nominee request.");
+
+        Patient storage patient = patients[request.patientId];
+        require(verifySecurityQuestions(patient.id, _providedAnswers), "Security questions verification failed.");
+
+        patient.nominee = msg.sender;
+        patient.nomineeConfirmed = true;
+
+        // Clear the pending request
+        request.isPending = false;
+
+        emit NomineeRequestAccepted(request.patientId, msg.sender);
+    }
+
+    // Nominee rejects the request
+    function rejectNomineeRequest() public {
+        NomineeRequest storage request = nomineeRequests[msg.sender];
+        require(request.isPending, "No pending nominee request.");
+
+        // Clear the pending request
+        request.isPending = false;
+
+        emit NomineeRequestRejected(request.patientId, msg.sender);
+    }
+
+    // Cancel nominee (done by the patient)
+    function cancelNominee(uint256 _patientId) public {
+        require(patients[_patientId].id != 0, "Patient does not exist.");
+        require(patients[_patientId].nominee != address(0), "No nominee assigned.");
+        
+        address oldNominee = patients[_patientId].nominee;
+        patients[_patientId].nominee = address(0);
+        patients[_patientId].nomineeConfirmed = false;
+
+        emit NomineeCanceled(_patientId, oldNominee);
     }
 
     // Login function using public ID and password
@@ -63,13 +135,37 @@ contract PatientManagementAndNominee {
             "Invalid password."
         );
 
-        emit LoginSuccess(patientId, _publicId); // Emit successful login event
+        emit LoginSuccess(patientId, _publicId);
         return patientId;
     }
 
-    // Function to verify nominee (could be called by the patient)
-    function verifyNominee(uint256 _patientId) public returns (address) {
+    // Verify nominee (to check the nominee for a patient)
+    function verifyNominee(uint256 _patientId) public view returns (address) {
         require(patients[_patientId].id != 0, "Patient does not exist.");
+        require(patients[_patientId].nomineeConfirmed, "Nominee not confirmed.");
         return patients[_patientId].nominee;
+    }
+
+    // Verify security questions (nominee answers for accessing the patient's data)
+    function verifySecurityQuestions(uint256 _patientId, bytes32[] memory _providedAnswers) internal view returns (bool) {
+        Patient storage patient = patients[_patientId];
+        require(_providedAnswers.length == patient.securityQuestions.length, "Mismatch in number of security questions.");
+
+        for (uint256 i = 0; i < _providedAnswers.length; i++) {
+            if (_providedAnswers[i] != patient.securityAnswers[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Nominee can access patient’s data if they answer security questions correctly
+    function nomineeAccessData(uint256 _patientId, bytes32[] memory _providedAnswers) public view returns (bool) {
+        Patient storage patient = patients[_patientId];
+        require(patient.nominee == msg.sender, "Only the nominee can access the data.");
+        require(verifySecurityQuestions(_patientId, _providedAnswers), "Security questions verification failed.");
+        
+        // Nominee can now access the patient’s data (placeholder for data retrieval logic)
+        return true;
     }
 }
