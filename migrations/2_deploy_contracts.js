@@ -4,6 +4,8 @@ const path = require('path');
 const HospitalManagement = artifacts.require("HospitalManagement");
 const HealthcareProfessionalManagement = artifacts.require("HealthcareProfessionalManagement");
 const PatientManagementAndNominee = artifacts.require("PatientManagementAndNominee");
+const DataStandardizationAndInteroperability= artifacts.require("DataStandardizationAndInteroperability");
+const DoctorRecordManagement= artifacts.require("DoctorRecordManagement");
 
 module.exports = async function (deployer) {
     await deployer.deploy(HospitalManagement, { gas: 5000000 });
@@ -22,11 +24,21 @@ module.exports = async function (deployer) {
     const patientManagementAndNominee = await PatientManagementAndNominee.deployed();
     const patientManagementAndNomineeAddress = patientManagementAndNominee.address;
 
+    await deployer.deploy(DataStandardizationAndInteroperability, { gas: 5000000 });
+    const dataStandardizationAndInteroperability = await DataStandardizationAndInteroperability.deployed();
+    const dataStandardizationAndInteroperabilityAddress = dataStandardizationAndInteroperability.address;
+
+    await deployer.deploy(DoctorRecordManagement, { gas: 5000000 });
+    const doctorRecordManagement = await DoctorRecordManagement.deployed();
+    const doctorRecordManagementAddress = doctorRecordManagement.address;
+
     // Prepare the addresses object
     const addresses = {
         HospitalManagement: hospitalContractAddress,
         HealthcareProfessionalManagement: healthcareProfessionalManagementAddress,
-        PatientManagementAndNominee: patientManagementAndNomineeAddress
+        PatientManagementAndNominee: patientManagementAndNomineeAddress,
+        DataStandardizationAndInteroperability: dataStandardizationAndInteroperabilityAddress,
+        DoctorRecordManagement: doctorRecordManagementAddress
     };
 
     // Write addresses to the addresses.json file
