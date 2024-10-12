@@ -7,7 +7,7 @@ contract DoctorRecordManagement {
     struct MedicalRecord {
         uint256 id;                       // Auto-generated ID for the record
         uint256 patientId;                // ID of the patient associated with the record
-        string doctorName;                // Name of the doctor
+        address doctorAddress;             // Address of the doctor
         string diagnosis;                 // Diagnosis details
         string treatment;                 // Treatment details
         string prescription;              // Prescribed medication
@@ -21,7 +21,7 @@ contract DoctorRecordManagement {
     struct MedicalRecordRequest {
         uint256 requestId;                // ID for the record request
         uint256 patientId;                // ID of the patient for the request
-        string doctorName;                // Name of the doctor requesting the record
+        address doctorAddress;             // Address of the doctor requesting the record
         string diagnosis;                 // Diagnosis details
         string treatment;                 // Treatment details
         string prescription;              // Prescribed medication
@@ -40,7 +40,7 @@ contract DoctorRecordManagement {
 
     DataStandardizationAndInteroperability public standardizationContract; // Instance of the standardization contract
 
-    event MedicalRecordRequested(uint256 requestId, uint256 patientId, string doctorName);
+    event MedicalRecordRequested(uint256 requestId, uint256 patientId, address doctorAddress);
     event MedicalRecordAccepted(uint256 requestId);
     event MedicalRecordRevoked(uint256 requestId);
     event MedicalRecordShared(uint256 requestId, address recipient);
@@ -52,7 +52,7 @@ contract DoctorRecordManagement {
     // Request to store a medical record for a patient
     function storeMedicalRecord(
         uint256 _patientId,
-        string memory _doctorName,
+        address _doctorAddress,
         string memory _diagnosis,
         string memory _treatment,
         string memory _prescription,
@@ -65,7 +65,7 @@ contract DoctorRecordManagement {
         medicalRecordRequests[requestCount] = MedicalRecordRequest(
             requestCount,
             _patientId,
-            _doctorName,
+            _doctorAddress,
             _diagnosis,
             _treatment,
             _prescription,
@@ -76,7 +76,7 @@ contract DoctorRecordManagement {
             false // Initially not approved
         );
 
-        emit MedicalRecordRequested(requestCount, _patientId, _doctorName);
+        emit MedicalRecordRequested(requestCount, _patientId, _doctorAddress);
     }
 
     // Patient accepts the medical record request
@@ -90,7 +90,7 @@ contract DoctorRecordManagement {
         medicalRecords[recordCount] = MedicalRecord(
             recordCount,
             request.patientId,
-            request.doctorName,
+            request.doctorAddress, // Store the doctor's address
             request.diagnosis,
             request.treatment,
             request.prescription,
@@ -113,11 +113,14 @@ contract DoctorRecordManagement {
         emit MedicalRecordAccepted(_requestId);
     }
 
-    // Function to share a record with another address
+    // Function to share a record with another address in standardized format
     function shareRecord(uint256 _requestId, address _recipient) public {
         require(medicalRecordRequests[_requestId].approved, "Record must be approved before sharing.");
         
-        emit MedicalRecordShared(_requestId, _recipient);
+        // Share the standardized format
+        (uint256 standardizedRecordId, , , ) = standardizationContract.getStandardizedRecord(_requestId);
+
+        emit MedicalRecordShared(standardizedRecordId, _recipient);
         // Logic for sharing the record can be implemented here
     }
 
@@ -128,6 +131,13 @@ contract DoctorRecordManagement {
         delete medicalRecordRequests[_requestId]; // Remove the request from the mapping
 
         emit MedicalRecordRevoked(_requestId);
+    }
+
+    // Function to view a full medical record (only for patient and doctor)
+    function viewMedicalRecord(uint256 _recordId) public view returns (MedicalRecord memory) {
+        require(msg.sender == recordOwners[_recordId] || msg.sender == medicalRecords[_recordId].doctorAddress, "Not authorized to view this record.");
+        
+        return medicalRecords[_recordId]; // Return the full record
     }
 
     // Additional functions to view requests or records can be added as needed

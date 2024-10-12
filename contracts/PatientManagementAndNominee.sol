@@ -24,6 +24,7 @@ contract PatientManagementAndNominee {
     mapping(uint256 => Patient) public patients;               // Mapping from patient ID to Patient struct
     mapping(bytes32 => uint256) public publicIdToPatientId;    // Mapping from public ID to patient ID
     mapping(address => NomineeRequest) public nomineeRequests; // Mapping from nominee address to their pending request
+    mapping(uint256 => address[]) public patientNominees;      // Mapping from patient ID to their nominees
     uint256 public patientCount;                               // Counter for patients
 
     event PatientRegistered(uint256 id, string name, string contact, string patientAddress, address nominee, bytes32 publicId);
@@ -95,6 +96,9 @@ contract PatientManagementAndNominee {
         patient.nominee = msg.sender;
         patient.nomineeConfirmed = true;
 
+        // Add nominee to patient's nominee list
+        patientNominees[request.patientId].push(msg.sender);
+
         // Clear the pending request
         request.isPending = false;
 
@@ -122,6 +126,18 @@ contract PatientManagementAndNominee {
         patients[_patientId].nomineeConfirmed = false;
 
         emit NomineeCanceled(_patientId, oldNominee);
+    }
+
+    // Get nominees for a patient
+    function getNomineesCount(uint256 _patientId) public view returns (uint256) {
+        require(patients[_patientId].id != 0, "Patient does not exist.");
+        return patientNominees[_patientId].length;
+    }
+
+    function nominees(uint256 _patientId, uint256 index) public view returns (address) {
+        require(patients[_patientId].id != 0, "Patient does not exist.");
+        require(index < patientNominees[_patientId].length, "Index out of bounds.");
+        return patientNominees[_patientId][index];
     }
 
     // Login function using public ID and password

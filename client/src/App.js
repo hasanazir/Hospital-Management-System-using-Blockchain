@@ -11,6 +11,8 @@ import PatientDashboard from './components/PatientDashboard';
 import detectEthereumProvider from '@metamask/detect-provider';
 import LoginPage from "./components/LoginPage";
 import RecordsList from "./components/RecordList";
+import ViewRecords from './pages/ViewRecords';
+import ManageNominee from './pages/ManageNominee';
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
@@ -44,6 +46,8 @@ const App = () => {
         <Route path="/patient-dashboard" element={<PatientDashboard web3={web3} account={account} />} />
         <Route path="/login" element={<LoginPage web3={web3} account={account}/>} /> {/* Add the login page route */}
         <Route path="/records-list" element={<RecordsList web3={web3} account={account} />} />
+        <Route path="/view-records" element={<ViewRecords web3={web3} account={account} />} />
+        <Route path="/manage-nominee" element={<ManageNominee web3={web3} account={account} />} />
       </Routes>
     </Router>
   );
