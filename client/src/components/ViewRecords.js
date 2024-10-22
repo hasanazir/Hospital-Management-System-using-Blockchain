@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DoctorRecordManagement from '../contracts/DoctorRecordManagement.json';
-import DataStandardizationAndInteroperability from '../contracts/DataStandardizationAndInteroperability.json';
-import address from '../address.json';
+import address from '../contracts/addresses.json';
 
 const ViewRecords = ({ web3, account }) => {
     const navigate = useNavigate();

@@ -1,6 +1,5 @@
 // src/components/RecordsList.js
 import React, { useEffect, useState } from 'react';
-import DoctorManagement from '../contracts/DoctorManagement.json'; // Adjust the path as needed
 import addresses from '../contracts/addresses.json';
 
 const RecordsList = ({ web3, account }) => {

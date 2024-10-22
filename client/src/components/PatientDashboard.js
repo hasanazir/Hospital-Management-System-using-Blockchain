@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Button } from 'react-bootstrap'; // Modal to display record details
-import addressFile from '../address.json';
-import patientContractABI from '../contracts/PatientManagementAndNominee.json';
+import addressFile from '../contracts/addresses.json';
 
 const PatientDashboard = ({ web3, account }) => {
   const [contract, setContract] = useState(null);

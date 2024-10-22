@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Web3 from 'web3';
-import PatientManagementAndNominee from '../artifacts/PatientManagementAndNominee.json'; // Import ABI
-import address from '../address.json'; // Assuming your contract address is in this file
+import addresses from '../contracts/addresses.json';
 
 const ManageNominee = ({ web3, account }) => {
     const [nominees, setNominees] = useState([]);

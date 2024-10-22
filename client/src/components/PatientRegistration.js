@@ -1,7 +1,6 @@
 import addresses from '../contracts/addresses.json';
 import React, { useState } from 'react';
 import Web3 from 'web3';
-import PatientManagementAndNominee from '../contracts/PatientManagementAndNominee.json'; // Adjust path as needed
 import { useNavigate } from 'react-router-dom';
 
 const patientManagemetAndNomineeContractAddress=addresses.PatientManagementAndNominee;

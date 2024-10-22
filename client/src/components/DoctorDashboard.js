@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import web3 from '../web3'; // Ensure web3 is correctly configured
-import addresses from '../contracts/addresses.json'; 
-import DoctorManagement from '../contracts/DoctorManagement.json'; 
+import addresses from '../contracts/addresses.json';
 import { useNavigate } from 'react-router-dom';
 
 const doctorContractAddress = addresses.DoctorRecordManagement; // Address for Doctor contract
 
-const DoctorDashboard = ({ account }) => {
+const DoctorDashboard = ({ web3, account }) => {
     const [patientId, setPatientId] = useState('');
     const [doctorName, setDoctorName] = useState('');
     const [diagnosis, setDiagnosis] = useState('');
@@ -29,7 +27,7 @@ const DoctorDashboard = ({ account }) => {
 
         try {
             const contract = new web3.eth.Contract(
-                DoctorRecordManagement.abi,
+                DoctorManagement.abi,
                 doctorContractAddress // Doctor contract address
             );
 
@@ -45,14 +43,14 @@ const DoctorDashboard = ({ account }) => {
             // Send the request to store the medical record
             await contract.methods
                 .createMedicalRecord(
-                    patientId, 
-                    doctorName, 
-                    diagnosis, 
-                    treatment, 
-                    prescription, 
-                    notes, 
-                    dateOfVisit, 
-                    allergies, 
+                    patientId,
+                    doctorName,
+                    diagnosis,
+                    treatment,
+                    prescription,
+                    notes,
+                    dateOfVisit,
+                    allergies,
                     medicalHistory
                 )
                 .send({ from: account });

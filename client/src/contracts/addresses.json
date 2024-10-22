@@ -1,5 +1,7 @@
 {
-  "HospitalManagement": "0x30d48d9ea0b1865E52Bb01c6a373FE4bca9248d2",
-  "HealthcareProfessionalManagement": "0x7D34Ba67F6549ECe7E4c7De7040a00236EaDba90",
-  "PatientManagementAndNominee": "0x2667C27449986d9248FA742101D767B028d8177F"
+  "HospitalManagement": "0x144820B9d9753e1491E8A5fB5FfEfD46356765f9",
+  "HealthcareProfessionalManagement": "0x7FD602D39BbFBD9AC04Ea1CBF2973EB1f36475B5",
+  "PatientManagementAndNominee": "0xE78a6904dd05B0703FCC38e6f9E9C0c37ac442bA",
+  "DataStandardizationAndInteroperability": "0x7Fc8bbdC9639b8cA8C388dBd9A45ec9D81786D2d",
+  "DoctorRecordManagement": "0xeE58b2910697f3613Af9061BD469D26348Cca5Fe"
 }

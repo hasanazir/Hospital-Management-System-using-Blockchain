@@ -28,7 +28,7 @@ module.exports = async function (deployer) {
     const dataStandardizationAndInteroperability = await DataStandardizationAndInteroperability.deployed();
     const dataStandardizationAndInteroperabilityAddress = dataStandardizationAndInteroperability.address;
 
-    await deployer.deploy(DoctorRecordManagement, { gas: 5000000 });
+    await deployer.deploy(DoctorRecordManagement,dataStandardizationAndInteroperabilityAddress,{ gas: 5000000 });
     const doctorRecordManagement = await DoctorRecordManagement.deployed();
     const doctorRecordManagementAddress = doctorRecordManagement.address;
 

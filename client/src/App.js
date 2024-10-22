@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Web3 from "web3";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
 import LandingPage from "./components/LandingPage";
 import HospitalRegistration from "./components/HospitalRegistration";
 import DoctorRegistration from "./components/DoctorRegistration";
@@ -11,8 +12,8 @@ import PatientDashboard from './components/PatientDashboard';
 import detectEthereumProvider from '@metamask/detect-provider';
 import LoginPage from "./components/LoginPage";
 import RecordsList from "./components/RecordList";
-import ViewRecords from './pages/ViewRecords';
-import ManageNominee from './pages/ManageNominee';
+import ViewRecords from './components/ViewRecords';
+import ManageNominee from './components/ManageNominee';
 
 const App = () => {
   const [web3, setWeb3] = useState(null);
@@ -44,7 +45,7 @@ const App = () => {
         <Route path="/hospital-dashboard" element={<HospitalDashboard web3={web3} account={account} />} />
         <Route path="/doctor-dashboard" element={<DoctorDashboard web3={web3} account={account} />} />
         <Route path="/patient-dashboard" element={<PatientDashboard web3={web3} account={account} />} />
-        <Route path="/login" element={<LoginPage web3={web3} account={account}/>} /> {/* Add the login page route */}
+        <Route path="/login" element={<LoginPage web3={web3} account={account}/>} /> 
         <Route path="/records-list" element={<RecordsList web3={web3} account={account} />} />
         <Route path="/view-records" element={<ViewRecords web3={web3} account={account} />} />
         <Route path="/manage-nominee" element={<ManageNominee web3={web3} account={account} />} />
